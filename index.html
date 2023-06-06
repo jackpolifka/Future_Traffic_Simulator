@@ -13,6 +13,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"
         integrity="sha512-z4OUqw38qNLpn1libAN9BsoDx6nbNFio5lA6CuTp9NlK83b89hgyCVq+N5FdBJptINztxn1Z3SaKSKUS5UP60Q=="
         crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="assets/js/matter.js"></script>
     <style>
         .float-right {
             float: right;
@@ -22,15 +23,20 @@
             clear: both;
         }
 
-        #first-lap, #second-lap, #third-lap {
+        #first-lap,
+        #second-lap,
+        #third-lap {
             background-image: url('assets/img/road.png');
             height: 190px;
         }
+
         .grass {
             background-color: green;
             height: 20px
         }
-        .square, .circle {
+
+        .square,
+        .circle {
             pointer-events: none;
             position: relative;
             width: 28px;
@@ -39,7 +45,6 @@
             background-color: purple;
             font-size: 14px;
         }
-
     </style>
 
 </head>
@@ -136,7 +141,7 @@
     </div>
     <script>
         document.addEventListener("DOMContentLoaded", () => {
-            const templateVars = {regular_vehicles: [], autonomous_vehicles: []};
+            const templateVars = { regular_vehicles: [], autonomous_vehicles: [] };
 
             updateTemplate = () => {
                 for (car in templateVars.regular_vehicles) {
@@ -144,7 +149,7 @@
                     if (templateVars.regular_vehicles[car].active === 0) {
                         document.getElementById('first-lap').innerHTML += '<div class="square"></div>'
                         //anime({
-                            
+
                         //});
                         templateVars.regular_vehicles[car].active = 1;
                     }
@@ -172,6 +177,117 @@
                 });
                 updateTemplate();
             });
+
+
+            // module aliases
+            const Engine = Matter.Engine,
+                Render = Matter.Render,
+                Runner = Matter.Runner,
+                Bodies = Matter.Bodies,
+                Events = Matter.Events,
+                Composite = Matter.Composite,
+                Body = Matter.Body;
+
+            // create an engine
+            let engine = Engine.create();
+            engine.gravity.y = 0;
+            // create a renderer
+            // 
+            let render = Render.create({
+                element: document.getElementById('first-lap'),
+                engine: engine,
+                options: {
+                    //'background': url('assets/img/road.png'),
+                    height: 190,
+                    width: 1305,
+                    //background: 'transparent',
+                    wireframes: false,
+                }
+            });
+
+            // create two boxes and a ground
+            //Bodies.recetangle() is for creating a shape object
+            let boxA = Bodies.rectangle(20, 50, 28, 28, { isStatic: false });
+            let boxB = Bodies.rectangle(20, 135, 28, 28);
+            let boxC = Bodies.rectangle(60, 50, 28, 28, { isStatic: false });
+            let boxD = Bodies.rectangle(60, 135, 28, 28);
+
+            //let ground = Bodies.rectangle(400, 610, 810, 60, { isStatic: true });
+            //boxA.setPosition(body, position)
+            //Composite.create({gravity: 0})
+            // add all of the bodies to the world
+            Composite.add(engine.world, [boxA, boxB, boxC, boxD]);
+
+            var lastTime = 0,
+                scaleRate = 0.6;
+
+            Events.on(engine, 'beforeUpdate', function (event) {
+                var timeScale = (event.delta || (1000 / 60)) / 1000;
+
+                // if (scaleRate > 0) {
+                //     Bodies.scale(bodyF, 1 + (scaleRate * timeScale), 1 + (scaleRate * timeScale));
+
+                //     // modify bodyE vertices
+                //     bodyE.vertices[0].x -= 0.2 * timeScale;
+                //     bodyE.vertices[0].y -= 0.2 * timeScale;
+                //     bodyE.vertices[1].x += 0.2 * timeScale;
+                //     bodyE.vertices[1].y -= 0.2 * timeScale;
+                //     Bodies.setVertices(bodyE, bodyE.vertices);
+                // }
+
+                // make bodyA move up and down
+                //var py = 300 + 100 * Math.sin(engine.timing.timestamp * 0.002);
+
+                // manual update velocity required for older releases
+                //if (Matter.version === '0.19.0') {
+                    //Body.setSpeed(boxC, 3);
+                    //Body.setVelocity(boxC, { x: 1 });
+                    //Body.setPosition(boxC, {x: 500, y : boxC.position.y}, true);
+                    //Body.setVelocity(boxA, { x: 2 });
+                    //Body.setVelocity(boxB, { x: 3 });
+                    //Body.setVelocity(compound, { x: 0, y: py - compound.position.y });
+                    //Body.setAngularVelocity(compound, 1 * Math.PI * timeScale);
+                //}
+
+                // move body and update velocity
+                //Bodies.setPosition(bodyA, { x: 100, y: py }, true);
+
+                // move compound body move up and down and update velocity
+                // Bodies.setPosition(compound, { x: 600, y: py }, true);
+
+                // // rotate compound body and update angular velocity
+                // Bodies.rotate(compound, 1 * Math.PI * timeScale, null, true);
+
+                // // after first 0.8 sec (simulation time)
+                // if (engine.timing.timestamp >= 800)
+                //     Bodies.setStatic(bodyG, true);
+
+                // every 1.5 sec (simulation time)
+                if (engine.timing.timestamp - lastTime >= 500) {
+                    //15mph, 30mph, ..., 70mph is equal to the following `x` values
+                    //  2, 2.5, ..., 5 
+                    Body.setVelocity(boxC, { x: 2, y: 0 })
+                    Body.setVelocity(boxD, { x: 5, y: 0 })
+                    //Bodies.setVelocity(bodyB, { x: 0, y: -10 });
+                    // Bodies.setAngle(bodyC, -Math.PI * 0.26);
+                    // Bodies.setAngularVelocity(bodyD, 0.2);
+
+                    // stop scaling
+                    scaleRate = 0;
+
+                    // update last time
+                    lastTime = engine.timing.timestamp;
+               }
+            });
+
+            // run the renderer
+            Render.run(render);
+
+            // create runner
+            let runner = Runner.create();
+
+            // run the engine
+            Runner.run(runner, engine);
         });
     </script>
 </body>
