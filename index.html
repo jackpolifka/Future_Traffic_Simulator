@@ -23,11 +23,9 @@
             clear: both;
         }
 
-        #first-lap,
-        #second-lap,
-        #third-lap {
-            background-image: url('assets/img/road.png');
-            height: 190px;
+        #simulator-track {
+            background-image: url('assets/img/track.png');
+            height: 600px;
         }
 
         .grass {
@@ -45,6 +43,10 @@
             background-color: purple;
             font-size: 14px;
         }
+
+        .underline {
+            text-decoration: underline;
+        }
     </style>
 
 </head>
@@ -53,7 +55,7 @@
     <div class="container">
         <div class="row">
             <div class="col-md-2"></div>
-            <div class="col-md-8">
+            <div class="col-md-6">
                 <h1>Future Traffic Flow Simulator</h1>
             </div>
             <div class="col-md-2"></div>
@@ -73,7 +75,7 @@
         </div>
         <div class="row">
             <div class="col-md-2"></div>
-            <div class="col-md-4 text-center">
+            <div class="col-md-4 text-center mb-2">
                 <button type="button" id="add-regular-vehicle" class="btn btn-primary btn-lg">
                     <p>Add Regular Vehicle</p>
                     <p>
@@ -111,30 +113,16 @@
         </div>
         <div class="row">
             <div class="col-md-12">
-                <h2>Start</h2>
+                <h2 class="underline">Start</h2>
             </div>
         </div>
         <div class="row">
-            <div id='first-lap' class="col-md-12">
-            </div>
-        </div>
-        <div class="row">
-            <div class="grass col-md-12"></div>
-        </div>
-        <div class="row">
-            <div id='second-lap' class="col-md-12">
-            </div>
-        </div>
-        <div class="row">
-            <div class="grass col-md-12"></div>
-        </div>
-        <div class="row">
-            <div id='third-lap' class="col-md-12">
+            <div id='simulator-track' class="col-md-12">
             </div>
         </div>
         <div class="row">
             <div class="col-md-12">
-                <h2 class="float-right">Finish</h2>
+                <h2 class="float-right underline">Finish</h2>
             </div>
             <div class="float-end"></div>
         </div>
@@ -164,65 +152,63 @@
                         lane: Math.random() > 0.5 ? 'top' : 'bottom',
                         active: 0
                     });
-                    updateTemplate();
+                    //updateTemplate();
                 }
             });
 
-            document.getElementById('add-autonomous-vehicle').addEventListener('click', () => {
+            document.getElementById('add-autonomous-vehicle').addEventListener('click', (e) => {
                 let HTMLquery = '#' + e.target.id + ' .speed option:checked';
                 templateVars.autonomous_vehicles.push({
                     speed: parseInt(document.querySelector(HTMLquery).value),
                     lane: Math.random() > 0.5 ? 'top' : 'bottom',
                     active: 0
                 });
-                updateTemplate();
+                //updateTemplate();
             });
+          
+            const engine = Matter.Engine.create();
+            engine.gravity.y = 0; //top-down view
+            const simulatorTrackSettings = { 
+                height: 600, 
+                width: 1320, 
+                background: 'transparent', // Needed Needed to use background-image CSS rule
+                wireframes: false // Needed Needed to use background-image CSS rule
+            };
 
-
-            // module aliases
-            const Engine = Matter.Engine,
-                Render = Matter.Render,
-                Runner = Matter.Runner,
-                Bodies = Matter.Bodies,
-                Events = Matter.Events,
-                Composite = Matter.Composite,
-                Body = Matter.Body;
-
-            // create an engine
-            let engine = Engine.create();
-            engine.gravity.y = 0;
-            // create a renderer
-            // 
-            let render = Render.create({
-                element: document.getElementById('first-lap'),
+            // Create canvas for simulator track
+            const render = Matter.Render.create({
+                element: document.getElementById('simulator-track'),
                 engine: engine,
                 options: {
-                    //'background': url('assets/img/road.png'),
-                    height: 190,
-                    width: 1305,
-                    //background: 'transparent',
-                    wireframes: false,
+                    height: simulatorTrackSettings.height,
+                    width: simulatorTrackSettings.width,
+                    background: simulatorTrackSettings.background,
+                    wireframes: simulatorTrackSettings.wireframes,
                 }
             });
 
+
             // create two boxes and a ground
             //Bodies.recetangle() is for creating a shape object
-            let boxA = Bodies.rectangle(20, 50, 28, 28, { isStatic: false });
-            let boxB = Bodies.rectangle(20, 135, 28, 28);
-            let boxC = Bodies.rectangle(60, 50, 28, 28, { isStatic: false });
-            let boxD = Bodies.rectangle(60, 135, 28, 28);
-
+            //let boxA = Matter.Bodies.rectangle(20, 50, 28, 28);
+            //let boxB = Matter.Bodies.rectangle(20, 135, 28, 28);
+            let boxC = Matter.Bodies.rectangle(20, 45, 28, 28);
+            let boxD = Matter.Bodies.rectangle(20, 135, 28, 28);
+            let boxE = Matter.Bodies.rectangle(20, 255, 28, 28);
+            let boxF = Matter.Bodies.rectangle(20, 345, 28, 28);
+            let boxG = Matter.Bodies.rectangle(20, 465, 28, 28);
+            let boxH = Matter.Bodies.rectangle(20, 555, 28, 28);
             //let ground = Bodies.rectangle(400, 610, 810, 60, { isStatic: true });
             //boxA.setPosition(body, position)
             //Composite.create({gravity: 0})
             // add all of the bodies to the world
-            Composite.add(engine.world, [boxA, boxB, boxC, boxD]);
+            Matter.Composite.add(engine.world, [boxC, boxD, boxE, boxF, boxG, boxH]);
 
-            var lastTime = 0,
+            let lastTime = 0,
                 scaleRate = 0.6;
 
-            Events.on(engine, 'beforeUpdate', function (event) {
-                var timeScale = (event.delta || (1000 / 60)) / 1000;
+            Matter.Events.on(engine, 'beforeUpdate', (event) => {
+                let timeScale = (event.delta || (1000 / 60)) / 1000;
 
                 // if (scaleRate > 0) {
                 //     Bodies.scale(bodyF, 1 + (scaleRate * timeScale), 1 + (scaleRate * timeScale));
@@ -263,11 +249,11 @@
                 //     Bodies.setStatic(bodyG, true);
 
                 // every 1.5 sec (simulation time)
-                if (engine.timing.timestamp - lastTime >= 500) {
+                if (engine.timing.timestamp - lastTime >= 1000) {
                     //15mph, 30mph, ..., 70mph is equal to the following `x` values
                     //  2, 2.5, ..., 5 
-                    Body.setVelocity(boxC, { x: 2, y: 0 })
-                    Body.setVelocity(boxD, { x: 5, y: 0 })
+                    //Matter.Body.setVelocity(boxC, { x: 2, y: 0 })
+                    //Matter.Body.setVelocity(boxD, { x: 5, y: 0 })
                     //Bodies.setVelocity(bodyB, { x: 0, y: -10 });
                     // Bodies.setAngle(bodyC, -Math.PI * 0.26);
                     // Bodies.setAngularVelocity(bodyD, 0.2);
@@ -281,13 +267,16 @@
             });
 
             // run the renderer
-            Render.run(render);
+            Matter.Render.run(render);
 
             // create runner
-            let runner = Runner.create();
+            //let runner = Runner.create();
 
             // run the engine
-            Runner.run(runner, engine);
+            //Runner.run(runner, engine);
+
+            //Matter.Render.run(render);
+            Matter.Runner.run(Matter.Runner.create(), engine);
         });
     </script>
 </body>
