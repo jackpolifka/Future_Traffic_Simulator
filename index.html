@@ -129,17 +129,14 @@
     </div>
     <script>
         document.addEventListener("DOMContentLoaded", () => {
-            //const templateVars = { regular_vehicles: [], autonomous_vehicles: [] };
-
             const engine = Matter.Engine.create();
             engine.gravity.y = 0; // top-down view
             const simulatorTrackSettings = {
                 height: 600,
                 width: 1320,
-                background: 'transparent', // Needed Needed to use background-image CSS rule
+                background: 'transparent', // Needed to use background-image CSS rule
                 wireframes: false // Needed to use background-image CSS rule
             };
-
             // Create canvas for simulator track
             const render = Matter.Render.create({
                 element: document.getElementById('simulator-track'),
@@ -161,14 +158,17 @@
                         10,
                         10,
                         (simulatorTrackSettings.height * 2 - 10) / 3,
-                        { isStatic: true, label: 'first-lap', render: { visible: false } }
+                        {
+                            isStatic: true, label: 'first-lap', render: { visible: true },
+
+                        }
                     ),
                     Matter.Bodies.rectangle(
                         simulatorTrackSettings.width,
                         ((simulatorTrackSettings.height - 10) / 2),
                         10,
                         simulatorTrackSettings.height / 3,
-                        { isStatic: true, label: 'second-lap', render: { visible: false } }
+                        { isStatic: true, label: 'second-lap', render: { visible: true } }
                     ),
                 ]
             );
@@ -186,7 +186,17 @@
                         lane === 0 ? 45 : 135, // starting `y` vector
                         28, // height
                         28, // width
-                        { label: 'vehicle', lane: lane, velocity: { x: this._getSpeed(this._options.speed), y: 0 } }
+                        {
+                            label: 'vehicle',
+                            lane: lane,
+                            render: { fillStyle: this._options.color },
+                            velocity: { x: this._getSpeed(this._options.speed), y: 0 },
+                            inertia: 'Infinity',
+                            friction: 0,
+                            frictionAir: 0,
+                            frictionStatic: 0,
+                            isStatic: false
+                        }
                     );
                 }
                 _getStartingLane() {
@@ -223,32 +233,16 @@
                 }
             }
 
-            let lastTime = 0,
-                scaleRate = 0.6;
+
             let vehicles = [];
 
             document.getElementById('add-regular-vehicle').addEventListener('click', (e) => {
                 if (e.target.id === 'add-regular-vehicle') {
                     let HTMLquery = '#' + e.target.id + ' .speed option:checked',
-                        newVehicle = new Vehicle({ speed: parseInt(document.querySelector(HTMLquery).value) });
-
-                        console.log('Here');
-                    Matter.Composite.add(engine.world, [newVehicle.getBody()]);
-                    //Matter.Events.off(engine, 'beforeUpdate');
-                    vehicles.push(newVehicle);
-                    Matter.Events.on(engine, 'beforeUpdate', (event) => {
-                        if (engine.timing.timestamp - lastTime >= 500) {
-                            for (vehicle in vehicles) {
-                                let singleVehicle = vehicles[vehicle];
-                                Matter.Body.setVelocity(singleVehicle.getBody(), singleVehicle.getBody().velocity);
-                            }
-
-                            // stop scaling
-                            scaleRate = 0;
-
-                            // update last time
-                            lastTime = engine.timing.timestamp;
-                        }
+                        newVehicle = new Vehicle({ color: 'blue', speed: parseInt(document.querySelector(HTMLquery).value) });
+                    Matter.Composite.add(engine.world, newVehicle.getBody());
+                    Matter.Events.on(engine, 'beforeUpdate', () => {
+                        Matter.Body.setVelocity(newVehicle.getBody(), newVehicle.getBody().velocity);
                     });
                 }
             });
@@ -256,89 +250,52 @@
             document.getElementById('add-autonomous-vehicle').addEventListener('click', (e) => {
                 if (e.target.id === 'add-autonomous-vehicle') {
                     let HTMLquery = '#' + e.target.id + ' .speed option:checked',
-                        newVehicle = new Vehicle({ speed: parseInt(document.querySelector(HTMLquery).value) });
-                        console.log('Here222');
-
-                    Matter.Composite.add(engine.world, [newVehicle.getBody()]);
-                    //Matter.Events.off(engine, 'beforeUpdate');
-                    vehicles.push(newVehicle);
-                    Matter.Events.on(engine, 'beforeUpdate', (event) => {
-                        if (engine.timing.timestamp - lastTime >= 500) {
-                            for (vehicle in vehicles) {
-                                /** Vehicle singleVehicle **/
-                                let singleVehicle = vehicles[vehicle];
-                                Matter.Body.setVelocity(singleVehicle.getBody(), singleVehicle.getBody().velocity);
-                            }
-
-                            // stop scaling
-                            scaleRate = 0;
-
-                            // update last time
-                            lastTime = engine.timing.timestamp;
-                        }
+                        newVehicle = new Vehicle({ color: 'red', speed: parseInt(document.querySelector(HTMLquery).value) });
+                    Matter.Composite.add(engine.world, newVehicle.getBody());
+                    Matter.Events.on(engine, 'beforeUpdate', () => {
+                        Matter.Body.setVelocity(newVehicle.getBody(), newVehicle.getBody().velocity);
                     });
                 }
             });
 
-
-
-            // create two boxes and a ground
-            //let boxC = Matter.Bodies.rectangle(20, 45, 28, 28, { label: 'vehicle', lane: 0, velocity: { x: 2, y: 0 } });
-            //let boxD = Matter.Bodies.rectangle(20, 135, 28, 28, { label: 'vehicle', lane: 1, velocity: { x: 5, y: 0 } });
-            //Matter.Composite.add(engine.world, [boxC, boxD]);
-
-
-
-            // let lastTime = 0,
-            //     scaleRate = 0.6;
-
-            // Matter.Events.on(engine, 'beforeUpdate', (event) => {
-            //     if (engine.timing.timestamp - lastTime >= 500) {
-            //         //15mph, 30mph, ..., 70mph is equal to the following `x` values
-            //         //  2, 2.5, ..., 5 
-            //         Matter.Body.setVelocity(boxC, { x: 2, y: 0 })
-
-            //         // stop scaling
-            //         scaleRate = 0;
-
-            //         // update last time
-            //         lastTime = engine.timing.timestamp;
-            //     }
-            // });
-            // Matter.Events.off(engine);
-
-            // Matter.Events.on(engine, 'beforeUpdate', (event) => {
-            //     if (engine.timing.timestamp - lastTime >= 500) {
-            //         //15mph, 30mph, ..., 70mph is equal to the following `x` values
-            //         //  2, 2.5, ..., 5 
-            //         //Matter.Body.setVelocity(boxC, { x: 2, y: 0 })
-            //         Matter.Body.setVelocity(boxD, { x: 5, y: 0 })
-
-            //         // stop scaling
-            //         scaleRate = 0;
-
-            //         // update last time
-            //         lastTime = engine.timing.timestamp;
-            //     }
-            // });
-
-            // //Collusion detction rules
+            // Collusion detction rules
             Matter.Events.on(engine, 'collisionStart', (event) => {
-                let pairs = event.pairs
+                let pairs = event.pairs;
+                const updateLanePosition = (vehicleBody, lapStartingPosition) => {
+                    console.log(vehicleBody, lapStartingPosition);
+                    Matter.Body.setPosition(vehicleBody, lapStartingPosition);
+                    // ** HACK ** After collusion, previous `beforeUpdate` event doesn't run?!
+                    // Source: https://github.com/liabru/matter-js/issues/256
+                    for (let i = 0; i < 1000 / 60; i++) {
+                        Matter.Engine.update(engine, 1);
+                    }
+                };
                 for (const pair of pairs) {
+                    console.log(pair.bodyA.label, pair.bodyB.label);
                     if (pair.bodyA.label === 'vehicle' && pair.bodyB.label === 'first-lap') {
                         let secondLapStartPosition = { x: 20, y: 255 };
                         if (pair.bodyA.lane === 1) {
                             secondLapStartPosition = { x: 20, y: 345 };
                         }
-                        Matter.Body.setPosition(pair.bodyA, secondLapStartPosition);
-                    }
-                    if (pair.bodyA.label === 'vehicle' && pair.bodyB.label === 'second-lap') {
+                        updateLanePosition(pair.bodyA, secondLapStartPosition);
+                    } else if (pair.bodyA.label === 'first-lap' && pair.bodyB.label === 'vehicle') {
+                        let secondLapStartPosition = { x: 20, y: 255 };
+                        if (pair.bodyB.lane === 1) {
+                            secondLapStartPosition = { x: 20, y: 345 };
+                        }
+                        updateLanePosition(pair.bodyB, secondLapStartPosition);
+                    } else if (pair.bodyA.label === 'vehicle' && pair.bodyB.label === 'second-lap') {
                         let thirdLapStartPosition = { x: 20, y: 465 };
                         if (pair.bodyA.lane === 1) {
                             thirdLapStartPosition = { x: 20, y: 555 };
                         }
-                        Matter.Body.setPosition(pair.bodyA, thirdLapStartPosition);
+                        updateLanePosition(pair.bodyA, thirdLapStartPosition);
+                    } else if (pair.bodyA.label === 'second-lap' && pair.bodyB.label === 'vehicle') {
+                        let thirdLapStartPosition = { x: 20, y: 465 };
+                        if (pair.bodyB.lane === 1) {
+                            thirdLapStartPosition = { x: 20, y: 555 };
+                        }
+                        updateLanePosition(pair.bodyB, thirdLapStartPosition);
                     }
                 }
             })
